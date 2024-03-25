@@ -1,8 +1,14 @@
 import ProductModel from "./product.model.js";
+import ProductRepository from "./product.repository.js";
 
 export default class ProductController{
-    getAllProducts(req,res){
-        const products = ProductModel.getAll();
+
+    constructor(){
+        this.productRepository = new ProductRepository
+    }
+
+    async getAllProducts(req,res){
+        const products = await this.productRepository.getAll();
         res.status(200).send(products);
     }
 
@@ -10,9 +16,9 @@ export default class ProductController{
 
     }
 
-    getOneProduct(req,res){
+    async getOneProduct(req,res){
         const id = req.params.id;
-        const productFound = ProductModel.get(id);
+        const productFound = await this.productRepository.get(id);
         if(!productFound){
             return res.status(404).send("Product not found")
         }else{
@@ -20,31 +26,29 @@ export default class ProductController{
         }
     }
 
-    addProduct(req,res){
-        const {name,desc,price,category,sizes} = req.body;
-        const newProduct = {
-            name,
-            desc,
-            price: parseFloat(price),
-            imageurl: req.file.filename,
-            category,
-            sizes: sizes.split(',')
-        }
-
-        const createdProduct = ProductModel.add(newProduct);
+    async addProduct(req,res){
+        console.log(req.body)
+        const {name,desc,price,category,sizes,ratings} = req.body;
+        const product = new ProductModel(name,desc,parseFloat(price),category,sizes.split(','),ratings);
+        const createdProduct = await this.productRepository.add(product)
+        console.log(createdProduct)
         res.status(201).send(createdProduct);
     }
 
-    postRating(req,res){
+    async postRating(req,res){
+        const userID = req.userid;
+        const productID  = req.body.productID;
+        const rating = req.body.rating;
 
+        await this.productRepository.rate(userID,productID,rating)
+        res.status(200).send("Rating added Successfully")
     }
 
-    filterProduct(req,res){
+    async filterProduct(req,res){
         const minPrice = req.query.minPrice;
         const maxPrice = req.query.maxPrice;
         const category = req.query.category;
-        console.log(req.query);
-        const result = ProductModel.filter(minPrice,maxPrice,category);
+        const result = await this.productRepository.filter(minPrice,maxPrice,category);
         res.status(200).send(result);
     }
 }    

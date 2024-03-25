@@ -1,27 +1,17 @@
+import UserModel from "../user/user.model.js";
+
 export default class ProductModel{
-    constructor(id,name,desc,price,imageUrl,category,sizes){
-        this.id = id;
+    constructor(name,desc,price,category,sizes,ratings){
         this.name = name;
         this.desc = desc;
         this.price = price;
-        this.imageUrl = imageUrl;
+        // this.imageUrl = imageUrl;
         this.category = category;
         this.sizes = sizes;
+        this.ratings = ratings;
     }
 
-    static getAll(){
-        return products;
-    }
-    static add(product){
-        product.id = products.length+1;
-        products.push(product);
-        return product;
-    }
-
-    static get(id){
-        const product = products.find(p=> p.id == id)
-        return product;
-    }
+    
 
     static filter(minPrice,maxPrice,category){
         const results = products.filter(p=> {
@@ -32,6 +22,48 @@ export default class ProductModel{
             );
         });
         return results;
+    }
+
+    static ratings(userID,productID,rating){
+        // verify user
+        const user = UserModel.getAll().find(u=> u.id == userID)
+        if(!user){
+            return "User not found"
+        }
+
+        // verify product
+        const product = products.find(p=> p.id == productID);
+        if(!product){
+            return "Product not found"
+        }
+
+        // check rating for the product, if not available add
+        if(!product.ratings){
+            product.ratings = [];
+            product.ratings.push(
+                {
+                    userID: userID,
+                    rating: rating
+                }
+            );
+        }else{
+            // check if user rating already exist, if yes, update it
+            const index = product.ratings.findIndex(r => r.userID == userID);
+            
+            if(index>=0){
+                product.ratings[index] = {
+                    userID: userID,
+                    rating: rating
+                }
+            }else{
+                // if not, add anew rating
+                product.ratings.push({
+                    userID: userID,
+                    rating:rating
+                })
+            }
+        }
+
     }
 }
 
